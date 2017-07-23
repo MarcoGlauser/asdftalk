@@ -5,8 +5,8 @@ Docker image
 
 Docker container
 > A container is a runtime instance of a docker image.
+> 
 > A Docker container consists of
-
 > * A Docker image
 > * An execution environment
 > * A standard set of instructions
