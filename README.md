@@ -115,3 +115,19 @@ Because you don't want to store your secrets in your repository, you can additio
 before_script can be compared to the setup method on unittests. Because every pipeline stage is completely independent,(may even run on a different machine) you'd have to docker login during every single stage.
 
 everything below those is the specific configuation of a stage.
+
+
+# Learnings
+* Create a Docker base image
+
+  Docker offers inheritance of docker images. You should create a common base image containing your stack. Every Service with the same stack will inherit from the base image. This has a big impact on build time and caching.
+
+* Have one configuration for all environments
+
+  Inject the environment specific configurations and secrets through files or environment variables. This makes your service more portable and you can change the configuration without a new deployment.
+
+* Don't use `latest` Docker tag
+
+  Create a unique tag for each build. If you have a severe bug in an image and need to roll back, you can simply roll back to an old tag. You don't have to build the image all over again.
+  Some systems cache the tags and don't pull a tag if it already exists.
+  Tags are often used for versioning. (for example pyton:3.5)
