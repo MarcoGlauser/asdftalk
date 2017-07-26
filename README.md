@@ -116,6 +116,128 @@ before_script can be compared to the setup method on unittests. Because every pi
 
 everything below those is the specific configuation of a stage.
 
+## Dockerfile
+```
+FROM apgsga-registry.githost.io/adtech/django-base-image:1.0
+MAINTAINER Marco Glauser
+
+RUN apt-get update && apt-get install -y --no-install-recommends git
+
+COPY ./requirements.txt $SERVICE_HOME/requirements.txt
+RUN pip install -r $SERVICE_HOME/requirements.txt
+
+COPY . $SERVICE_HOME
+
+RUN python $SERVICE_HOME/manage.py collectstatic --noinput  # Collect static files
+
+CMD ["/src/uwsgi_entrypoint.sh"]
+```
+
+## Docker Build output
+```
+docker build -t $REGISTRY_IMAGE:$CI_BUILD_REF --pull .
+Sending build context to Docker daemon  2.514MB
+
+Step 1/8 : FROM apgsga-registry.githost.io/adtech/django-base-image:1.0
+1.0: Pulling from adtech/django-base-image
+Digest: sha256:a55b83e0365f97d414b892981da3a0c779a927f87bc68cb820d0412fcaa4430a
+Status: Image is up to date for apgsga-registry.githost.io/adtech/django-base-image:1.0
+ ---> 04194636f674
+Step 2/8 : MAINTAINER Marco Glauser
+ ---> Using cache
+ ---> 1fedc878f842
+Step 3/8 : RUN apt-get update && apt-get install -y --no-install-recommends git
+ ---> Using cache
+ ---> 567474d7596d
+Step 4/8 : COPY ./requirements.txt $SERVICE_HOME/requirements.txt
+ ---> Using cache
+ ---> 3c6185189aac
+Step 5/8 : RUN pip install -r $SERVICE_HOME/requirements.txt
+ ---> Using cache
+ ---> de1326081e1a
+Step 6/8 : COPY . $SERVICE_HOME
+ ---> f18a83c0ca6e
+Removing intermediate container 55acc181a857
+Step 7/8 : RUN python $SERVICE_HOME/manage.py collectstatic --noinput  # Collect static files
+ ---> Running in 4cd69ef228f3
+409 static files copied to '/static', 409 post-processed.
+ ---> c2e31a6e67d8
+Removing intermediate container 4cd69ef228f3
+Step 8/8 : CMD /src/uwsgi_entrypoint.sh
+ ---> Running in 3ec43f4a16cc
+ ---> 4c06e5dd71cf
+Removing intermediate container 3ec43f4a16cc
+Successfully built 4c06e5dd71cf
+```
+## Docker push output
+```
+$ docker push $REGISTRY_IMAGE:$CI_BUILD_REF
+The push refers to a repository [eu.gcr.io/adtech-158707/gotthard/gotthard]
+4b0f688d1fb9: Preparing
+95d5cb3b10f1: Preparing
+698d98a38b6e: Preparing
+8e9867326f57: Preparing
+c563335ade18: Preparing
+bef3aa4a7aca: Preparing
+82b082d5b92f: Preparing
+6f735618a40e: Preparing
+3f24b090534b: Preparing
+6ba7a2c38d3d: Preparing
+7205e853d9d6: Preparing
+593e094824d2: Preparing
+a2ae92ffcd29: Preparing
+bef3aa4a7aca: Waiting
+82b082d5b92f: Waiting
+6f735618a40e: Waiting
+3f24b090534b: Waiting
+6ba7a2c38d3d: Waiting
+7205e853d9d6: Waiting
+593e094824d2: Waiting
+a2ae92ffcd29: Waiting
+8e9867326f57: Layer already exists
+698d98a38b6e: Layer already exists
+c563335ade18: Layer already exists
+bef3aa4a7aca: Layer already exists
+6f735618a40e: Layer already exists
+82b082d5b92f: Layer already exists
+7205e853d9d6: Layer already exists
+6ba7a2c38d3d: Layer already exists
+3f24b090534b: Layer already exists
+a2ae92ffcd29: Layer already exists
+593e094824d2: Layer already exists
+95d5cb3b10f1: Pushed
+4b0f688d1fb9: Pushed
+3c60211292d79a7ee9cd1f8dcea732498630b2ce: digest: sha256:a17473aae61f5a80023b1c0da8d0d9bca97e2a872f4bacff51e7577e126974c6 size: 3051
+```
+
+## Deploy output
+```
+$ deploy "${CI_PROJECT_NAME}-${CI_ENVIRONMENT_SLUG}-worker"
+Generating kubeconfig...
+Using KUBE_CA_PEM...
+Cluster "gitlab-deploy" set.
+User "gitlab-deploy" set.
+Context "gitlab-deploy" set.
+Switched to context "gitlab-deploy".
+
+deployment "gotthard-staging-worker" image updated
+Waiting for deployment...
+deployment "gotthard-staging-worker" successfully rolled out
+```
+
+```
+$ deploy "${CI_PROJECT_NAME}-${CI_ENVIRONMENT_SLUG}-server"
+Generating kubeconfig...
+Using KUBE_CA_PEM...
+Cluster "gitlab-deploy" set.
+User "gitlab-deploy" set.
+Context "gitlab-deploy" set.
+Switched to context "gitlab-deploy".
+
+deployment "gotthard-staging-server" image updated
+Waiting for deployment...
+deployment "gotthard-staging-server" successfully rolled out
+```
 
 # Learnings
 * Create a Docker base image
