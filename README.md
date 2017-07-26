@@ -135,7 +135,7 @@ CMD ["/src/uwsgi_entrypoint.sh"]
 
 ## Docker Build output
 ```
-docker build -t $REGISTRY_IMAGE:$CI_BUILD_REF --pull .
+docker build -t $REGISTRY_IMAGE:$CI_BUILD_REF .
 Sending build context to Docker daemon  2.514MB
 
 Step 1/8 : FROM apgsga-registry.githost.io/adtech/django-base-image:1.0
