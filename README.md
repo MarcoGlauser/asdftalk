@@ -1,7 +1,8 @@
 # Vocab
 Docker image
 > An Image is an ordered collection of root filesystem changes and the corresponding execution parameters for use within a container runtime.
-> An image does not have state and it never changes.
+> An image does not have state and is immutable.
+> An image inherits from another image
 
 Docker container
 > A container is a runtime instance of a docker image.
@@ -11,14 +12,132 @@ Docker container
 > * An execution environment
 > * A standard set of instructions
 
+Docker tag
+> Represents a set of Layers that represent an image. Layers can be shared among images
+> The default tag is `latest`
+
 Docker registry
-> A Registry is a hosted service containing repositories of images.
+> A Registry is a hosted service containing images.
 
 GitLab
 > GitLab is an online Git repository manager with a wiki, issue tracking, CI and CD.
 
 Kubernetes
 > Kubernetes is an open-source system for automating deployment, scaling, and management of containerized applications.
+
+# Docker
+## Image vs Container
+![Docker Layers](https://raw.githubusercontent.com/MarcoGlauser/asdftalk/master/images/container-layers.jpg)
+
+## Dockerfile
+The Dockerfile is a recipe for how to create the layers of a docker image
+```
+FROM python:3.5-slim
+MAINTAINER Marco Glauser
+
+# Update packages
+RUN apt-get update && apt-get install -y --no-install-recommends gcc build-essential libpq-dev libyaml-dev binutils libproj-dev gdal-bin postgis
+
+ENV SERVICE_HOME=/src
+ENV BASE_DIR=/base
+
+RUN mkdir $SERVICE_HOME && mkdir $BASE_DIR && mkdir /static/
+
+WORKDIR $BASE_DIR
+COPY requirements.txt requirements.txt
+RUN pip install -r requirements.txt
+
+
+#standard port exposed by containers
+EXPOSE  8000
+
+WORKDIR $SERVICE_HOME
+```
+
+These Layers were created by the above Dockerfile.(read from bottom to top) Until the artificial blank line are the layers from the pyton:3.4-slim image. the remaining lines match the lines in our Dockerfile.
+```
+docker history apgsga-registry.githost.io/adtech/django-base-image:latest
+IMAGE               CREATED             CREATED BY                                      SIZE                COMMENT
+5638981a4d63        2 months ago        /bin/sh -c #(nop) WORKDIR /src                  0B                  
+<missing>           2 months ago        /bin/sh -c #(nop)  EXPOSE 8000/tcp              0B                  
+<missing>           2 months ago        /bin/sh -c pip install -r requirements.txt      72.9MB              
+<missing>           2 months ago        /bin/sh -c #(nop) COPY file:d504c2fff5600e...   313B                
+<missing>           2 months ago        /bin/sh -c #(nop) WORKDIR /base                 0B                  
+<missing>           2 months ago        /bin/sh -c mkdir $SERVICE_HOME && mkdir $B...   0B                  
+<missing>           2 months ago        /bin/sh -c #(nop)  ENV BASE_DIR=/base           0B                  
+<missing>           2 months ago        /bin/sh -c #(nop)  ENV SERVICE_HOME=/src        0B                  
+<missing>           2 months ago        /bin/sh -c apt-get update && apt-get insta...   355MB               
+<missing>           2 months ago        /bin/sh -c #(nop)  MAINTAINER Marco Glauser     0B                  
+
+<missing>           3 months ago        /bin/sh -c #(nop)  CMD ["python3"]              0B                  
+<missing>           3 months ago        /bin/sh -c set -ex;   apt-get update;  apt...   5.74MB              
+<missing>           3 months ago        /bin/sh -c #(nop)  ENV PYTHON_PIP_VERSION=...   0B                  
+<missing>           3 months ago        /bin/sh -c cd /usr/local/bin  && ln -s idl...   32B                 
+<missing>           3 months ago        /bin/sh -c set -ex  && buildDeps='   dpkg-...   63.5MB              
+<missing>           3 months ago        /bin/sh -c #(nop)  ENV PYTHON_VERSION=3.5.3     0B                  
+<missing>           3 months ago        /bin/sh -c #(nop)  ENV GPG_KEY=97FC712E4C0...   0B                  
+<missing>           3 months ago        /bin/sh -c apt-get update && apt-get insta...   7.77MB              
+<missing>           3 months ago        /bin/sh -c #(nop)  ENV LANG=C.UTF-8             0B                  
+<missing>           3 months ago        /bin/sh -c #(nop)  ENV PATH=/usr/local/bin...   0B                  
+<missing>           3 months ago        /bin/sh -c #(nop)  CMD ["/bin/bash"]            0B                  
+<missing>           3 months ago        /bin/sh -c #(nop) ADD file:f4e6551ac34ab44...   124MB 
+```
+
+
+## Essential commands
+To turn a Dockerfile into an image, `docker build` is used. 
+```
+docker build  --pull -t $CI_REGISTRY_IMAGE:$CI_BUILD_REF .
+Sending build context to Docker daemon  117.8kB
+
+Step 1/11 : FROM python:3.5-slim
+3.5-slim: Pulling from library/python
+Digest: sha256:6cbef17164fc35bed1f43b8cb671c51f5622881008fd748eaf80c20e7bfc0079
+Status: Image is up to date for python:3.5-slim
+ ---> b27a94c44674
+Step 2/11 : MAINTAINER Marco Glauser
+ ---> Using cache
+ ---> 095636dec305
+Step 3/11 : RUN apt-get update && apt-get install -y --no-install-recommends gcc build-essential libpq-dev libyaml-dev binutils libproj-dev gdal-bin postgis
+ ---> Using cache
+ ---> 90e8e32b7782
+Step 4/11 : ENV SERVICE_HOME /src
+ ---> Using cache
+ ---> 257bb6e67913
+Step 5/11 : ENV BASE_DIR /base
+ ---> Using cache
+ ---> 4356ed9a3e49
+Step 6/11 : RUN mkdir $SERVICE_HOME && mkdir $BASE_DIR && mkdir /static/
+ ---> Using cache
+ ---> b59e134575f1
+Step 7/11 : WORKDIR $BASE_DIR
+ ---> Using cache
+ ---> 2bef7bb6ec3e
+Step 8/11 : COPY requirements.txt requirements.txt
+ ---> Using cache
+ ---> 9b8c28d1655d
+Step 9/11 : RUN pip install -r requirements.txt
+ ---> Using cache
+ ---> 5ff2042c48f7
+Step 10/11 : EXPOSE 8000
+ ---> Using cache
+ ---> b0b8738d551d
+Step 11/11 : WORKDIR $SERVICE_HOME
+ ---> 5638981a4d63
+Removing intermediate container 0b0e09705936
+Successfully built 5638981a4d63
+```
+
+To store the newly built image in a registry, `docker push` is used.
+
+To start a new container from the image `docker run` is used.
+
+To download the image from the registry, `docker pull` is used.
+
+**Example: (-it for interactive and tty)**
+```
+docker run -it --rm ubuntu:16.04
+```
 
 # Workflow
 
