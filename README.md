@@ -30,7 +30,7 @@ Kubernetes
 ![Docker Layers](https://raw.githubusercontent.com/MarcoGlauser/asdftalk/master/images/container-layers.jpg)
 
 ## Dockerfile
-The Dockerfile is a recipe for how to create the layers of a docker image
+The Dockerfile is a recipe for how to create the layers of a docker image (apgsga-registry.githost.io/adtech/django-base-image:1.0)
 ```
 FROM python:3.5-slim
 MAINTAINER Marco Glauser
@@ -56,7 +56,7 @@ WORKDIR $SERVICE_HOME
 
 These Layers were created by the above Dockerfile.(read from bottom to top) Until the artificial blank line are the layers from the pyton:3.4-slim image. the remaining lines match the lines in our Dockerfile.
 ```
-docker history apgsga-registry.githost.io/adtech/django-base-image:latest
+docker history apgsga-registry.githost.io/adtech/django-base-image:1.0
 IMAGE               CREATED             CREATED BY                                      SIZE                COMMENT
 5638981a4d63        2 months ago        /bin/sh -c #(nop) WORKDIR /src                  0B                  
 <missing>           2 months ago        /bin/sh -c #(nop)  EXPOSE 8000/tcp              0B                  
@@ -87,7 +87,7 @@ IMAGE               CREATED             CREATED BY                              
 ## Essential commands
 To turn a Dockerfile into an image, `docker build` is used. 
 ```
-docker build  --pull -t $CI_REGISTRY_IMAGE:$CI_BUILD_REF .
+docker build  --pull -t apgsga-registry.githost.io/adtech/django-base-image:1.0 .
 Sending build context to Docker daemon  117.8kB
 
 Step 1/11 : FROM python:3.5-slim
